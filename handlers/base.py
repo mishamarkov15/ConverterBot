@@ -15,7 +15,7 @@ async def cmd_start(message: types.Message):
         f"Я умею {markdown.hbold('конфертировать изображения в PDF')} файл.",
         "Доступные форматы изображений: jpg, jpeg, png.",
     ]
-    await message.answer("\n".join(text))
+    await message.answer("\n".join(text), reply_markup=types.ReplyKeyboardRemove())
 
 
 @dp.message_handler(CommandHelp())
@@ -30,7 +30,7 @@ async def cmd_help(message: types.Message):
     await message.answer("\n".join(text))
 
 
-@dp.message_handler()
-async def echo(message: types.Message):
-    logging.info(f"User {message.chat.id} send some message.")
-    await message.reply(message.text)
+# @dp.message_handler()
+# async def echo(message: types.Message):
+#     logging.info(f"User {message.chat.id} send some message.")
+#     await message.reply(message.text)
