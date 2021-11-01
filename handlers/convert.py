@@ -1,12 +1,11 @@
 import logging
 import os, os.path
-import shutil
+import shutil, pathlib
 
 from PIL import Image
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
 
 from config import MAX_PHOTOS_COUNT
 from misc import dp
@@ -31,8 +30,8 @@ async def cmd_convert(message: types.Message):
     await ConvertImage.waiting_for_photos.set()
 
 
-def clear_memory():
-    shutil.rmtree('/home/mikhail/PycharmProjects/Bot_test/data/986374492')
+def clear_memory(message: types.Message):
+    shutil.rmtree(pathlib.Path('data', str(message.chat.id)))
 
 
 async def cancel_cmd(message: types.Message, state: FSMContext):
@@ -44,18 +43,18 @@ async def cancel_cmd(message: types.Message, state: FSMContext):
     await state.finish()
 
 
-async def jpg2pdf(message: types.Message):
-    path_to_photos = '/home/mikhail/PycharmProjects/Bot_test/data/' + str(message.chat.id) + '/photos'
+def jpg2pdf(message: types.Message):
+    path_to_photos = pathlib.Path('data', str(message.chat.id), 'photos')
     name_of_files = os.listdir(path_to_photos)
-    im1 = Image.open(path_to_photos + '/' + str(name_of_files[0])).convert('RGB')
+    im1 = Image.open(fp=pathlib.Path(path_to_photos, str(name_of_files[0])))
     images = []
     for i in range(1, len(name_of_files)):
-        images.append(Image.open(path_to_photos + '/' + str(name_of_files[i])).convert('RGB'))
+        images.append(Image.open(fp=pathlib.Path(path_to_photos, str(name_of_files[i]))).convert('RGB'))
     if len(images) != 0:
-        im1.save('/home/mikhail/PycharmProjects/Bot_test/data/' + str(message.chat.id) + '/result.pdf',
+        im1.save(pathlib.Path('data', str(message.chat.id), 'result.pdf'),
                     save_all=True, append_images=images)
     else:
-        im1.save('/home/mikhail/PycharmProjects/Bot_test/data/' + str(message.chat.id) + '/result.pdf')
+        im1.save(pathlib.Path('data', str(message.chat.id), 'result.pdf'))
 
 
 async def process_convert(message: types.Message, state: FSMContext):
@@ -66,7 +65,10 @@ async def process_convert(message: types.Message, state: FSMContext):
         else:
             await message.answer('Запускаю процесс конвертирования... Это займёт немного времени.',
                                  reply_markup=types.ReplyKeyboardRemove())
-            await jpg2pdf(message)
+            jpg2pdf(message)
+            path_to_pdf = pathlib.Path('data', str(message.chat.id), 'result.pdf')
+            await message.answer_document(document=open(path_to_pdf, 'rb'), caption="Ваш PDF файл:)")
+            clear_memory(message)
     await state.finish()
 
 
@@ -75,7 +77,7 @@ async def process_download_photo(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         if data['curr_photos_count'] < MAX_PHOTOS_COUNT:
             photo = message.photo.pop()
-            await photo.download(destination_dir='/home/mikhail/PycharmProjects/Bot_test/data/' + str(message.chat.id))
+            await photo.download(destination_dir=pathlib.Path('data', str(message.chat.id)))
             data['curr_photos_count'] += 1
             await message.answer(f"Фото добавлено. Ещё можно добавить {MAX_PHOTOS_COUNT - data['curr_photos_count']}.")
         else:
@@ -98,8 +100,7 @@ async def process_photo_sending(message: types.Message, state: FSMContext):
         await process_download_photo(message, state)
     elif message.content_type == 'text' and message.text == 'Конвертировать':
         await process_convert(message, state)
-        await message.answer_document()
     elif message.content_type == 'text' and message.text == 'Отмена':
         await cancel_cmd(message, state)
-        clear_memory()
+        clear_memory(message)
     print(message.content_type)
