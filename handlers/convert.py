@@ -28,6 +28,30 @@ async def cmd_convert(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(buttons)
     await message.answer('\n'.join(text), reply_markup=keyboard)
     await ConvertImage.waiting_for_photos.set()
+    state = FSMContext(dp.storage, message.chat.id, message.chat.id)
+    async with state.proxy() as data:
+        data['curr_photos_count'] = 0
+
+
+async def increase_photos_count(state: FSMContext):
+    async with state.proxy() as data:
+        data['curr_photos_count'] += 1
+
+
+@dp.message_handler(state=ConvertImage.waiting_for_photos, content_types=['photo', 'text', 'document'])
+async def process_photo_sending(message: types.Message, state: FSMContext):
+    logging.info(f"User {message.chat.id} sending data.")
+
+    if message.content_type == 'photo':
+        await increase_photos_count(state)
+        await process_download_photo(message, state)
+    elif message.content_type == 'document':
+        await process_download_document(message, state)
+    elif message.content_type == 'text' and message.text == 'Конвертировать':
+        await process_convert(message, state)
+    elif message.content_type == 'text' and message.text == 'Отмена':
+        await cancel_cmd(message, state)
+        clear_memory(message)
 
 
 def clear_memory(message: types.Message):
@@ -72,35 +96,20 @@ async def process_convert(message: types.Message, state: FSMContext):
     await state.finish()
 
 
+async def process_download_document(message: types.Message, state: FSMContext):
+    pass
+
+
 async def process_download_photo(message: types.Message, state: FSMContext):
     keyboard = types.ReplyKeyboardMarkup(keyboard=buttons)
     async with state.proxy() as data:
-        if data['curr_photos_count'] < MAX_PHOTOS_COUNT:
+        if data['curr_photos_count'] <= MAX_PHOTOS_COUNT:
+            logging.info(f"Uploaded photo from user {message.chat.id}")
             photo = message.photo.pop()
             await photo.download(destination_dir=pathlib.Path('data', str(message.chat.id)))
-            data['curr_photos_count'] += 1
-            await message.answer(f"Фото добавлено. Ещё можно добавить {MAX_PHOTOS_COUNT - data['curr_photos_count']}.")
         else:
             text = [
                 "Отправлено максимальное количество фотографий.",
                 "Нажмите кнопку 'Конвертировать'.",
             ]
             await message.answer('\n'.join(text), reply_markup=keyboard)
-
-
-@dp.message_handler(state=ConvertImage.waiting_for_photos, content_types=['photo', 'text', 'document'])
-async def process_photo_sending(message: types.Message, state: FSMContext):
-    logging.info(f"User {message.chat.id} sending data.")
-
-    async with state.proxy() as data:
-        if 'curr_photos_count' not in data.keys():
-            data['curr_photos_count'] = 0
-
-    if message.content_type == 'photo' or message.content_type == 'document':
-        await process_download_photo(message, state)
-    elif message.content_type == 'text' and message.text == 'Конвертировать':
-        await process_convert(message, state)
-    elif message.content_type == 'text' and message.text == 'Отмена':
-        await cancel_cmd(message, state)
-        clear_memory(message)
-    print(message.content_type)

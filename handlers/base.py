@@ -28,9 +28,3 @@ async def cmd_help(message: types.Message):
         "/convert - Начать процесс конвертации.",
     ]
     await message.answer("\n".join(text))
-
-
-# @dp.message_handler()
-# async def echo(message: types.Message):
-#     logging.info(f"User {message.chat.id} send some message.")
-#     await message.reply(message.text)

@@ -8,8 +8,7 @@ emoji = {
 }
 
 bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
-storage = MemoryStorage()
-dp = Dispatcher(bot, storage=storage)
+dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 def define_username(message: types.Message):

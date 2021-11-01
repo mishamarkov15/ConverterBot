@@ -6,6 +6,6 @@ async def set_default_commands(dp: Dispatcher):
         [
             types.BotCommand("start", "Запустить бота"),
             types.BotCommand("help", "Вывести справку"),
-            types.BotCommand("convert", "Начать конвертацию"),
+            types.BotCommand("convert", "Начать отправку фото"),
         ]
     )
