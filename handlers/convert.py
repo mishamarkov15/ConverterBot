@@ -1,8 +1,8 @@
 import logging
 import os, os.path
-import shutil, pathlib
+import shutil, pathlib, cv2
 
-from PIL import Image
+from PIL import Image, ImageFile
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -10,7 +10,6 @@ from aiogram.dispatcher import FSMContext
 from config import MAX_PHOTOS_COUNT
 from misc import dp
 from states.convert_image import ConvertImage
-
 
 buttons = [
         [types.KeyboardButton(text='Конвертировать', )],
@@ -46,6 +45,7 @@ async def process_photo_sending(message: types.Message, state: FSMContext):
         await increase_photos_count(state)
         await process_download_photo(message, state)
     elif message.content_type == 'document':
+        await increase_photos_count(state)
         await process_download_document(message, state)
     elif message.content_type == 'text' and message.text == 'Конвертировать':
         await process_convert(message, state)
@@ -67,16 +67,23 @@ async def cancel_cmd(message: types.Message, state: FSMContext):
     await state.finish()
 
 
-def jpg2pdf(message: types.Message):
-    path_to_photos = pathlib.Path('data', str(message.chat.id), 'photos')
-    name_of_files = os.listdir(path_to_photos)
-    im1 = Image.open(fp=pathlib.Path(path_to_photos, str(name_of_files[0])))
+def photo2pdf(message: types.Message):
     images = []
-    for i in range(1, len(name_of_files)):
-        images.append(Image.open(fp=pathlib.Path(path_to_photos, str(name_of_files[i]))).convert('RGB'))
+    if pathlib.Path('data', str(message.chat.id), 'photos').exists():
+        path_to_photos = pathlib.Path('data', str(message.chat.id), 'photos')
+        for file in os.listdir(path_to_photos):
+            images.append(Image.open(pathlib.Path(path_to_photos, str(file))).convert('RGB'))
+    if pathlib.Path('data', str(message.chat.id), 'documents').exists():
+        path_to_photos = pathlib.Path('data', str(message.chat.id), 'documents')
+        for file in os.listdir(path_to_photos):
+            im = cv2.imread(str(pathlib.Path(path_to_photos, str(file))), cv2.IMREAD_UNCHANGED)
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+            im = Image.fromarray(im)
+            images.append(im)
+    im1 = images[0]
     if len(images) != 0:
         im1.save(pathlib.Path('data', str(message.chat.id), 'result.pdf'),
-                    save_all=True, append_images=images)
+                    save_all=True, append_images=images[1:])
     else:
         im1.save(pathlib.Path('data', str(message.chat.id), 'result.pdf'))
 
@@ -89,7 +96,7 @@ async def process_convert(message: types.Message, state: FSMContext):
         else:
             await message.answer('Запускаю процесс конвертирования... Это займёт немного времени.',
                                  reply_markup=types.ReplyKeyboardRemove())
-            jpg2pdf(message)
+            photo2pdf(message)
             path_to_pdf = pathlib.Path('data', str(message.chat.id), 'result.pdf')
             await message.answer_document(document=open(path_to_pdf, 'rb'), caption="Ваш PDF файл:)")
             clear_memory(message)
@@ -97,7 +104,12 @@ async def process_convert(message: types.Message, state: FSMContext):
 
 
 async def process_download_document(message: types.Message, state: FSMContext):
-    pass
+    if message.document.mime_type in ['image/jpeg', 'image/pjpeg', 'image/tiff', 'image/x-tiff',
+                                      'image/bmp', 'image/x-windows-bmp', 'image/gif']:
+        async with state.proxy() as data:
+            if data['curr_photos_count'] <= MAX_PHOTOS_COUNT:
+                logging.info(f'Uploaded photo from user {message.chat.id}')
+                await message.document.download(destination_dir=pathlib.Path('data', str(message.chat.id)))
 
 
 async def process_download_photo(message: types.Message, state: FSMContext):
