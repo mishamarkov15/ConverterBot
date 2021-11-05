@@ -1,6 +1,6 @@
 from aiogram import Dispatcher, executor
 
-from misc import dp
+from loader import dp
 import handlers
 import logging
 from utils.set_bot_commands import set_default_commands

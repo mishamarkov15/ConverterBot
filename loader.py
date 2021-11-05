@@ -9,7 +9,3 @@ emoji = {
 
 bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot, storage=MemoryStorage())
-
-
-def define_username(message: types.Message):
-    return message.chat.first_name if message.chat.first_name else message.chat.username

@@ -11,7 +11,7 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 from config import MAX_PHOTOS_COUNT, BOT_TOKEN, emoji
-from misc import dp
+from loader import dp
 from states.convert_image import ConvertImage
 
 buttons = [
