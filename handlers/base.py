@@ -17,5 +17,5 @@ async def cmd_start(message: types.Message):
 @dp.message_handler(CommandHelp())
 async def cmd_help(message: types.Message):
     logging.info(f"User {message.chat.id} requested {message.text}.")
-    text = help_text(message)
+    text = help_text()
     await message.answer("".join(text))

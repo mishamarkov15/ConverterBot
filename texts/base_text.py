@@ -17,7 +17,7 @@ def start_text(message: types.Message) -> list:
     return text
 
 
-def help_text(message: types.Message) -> list:
+def help_text() -> list:
     text = [
         f"{emoji['light_bulb']} {markdown.hbold('Давайте расскажу, с чем я умею работать')}\n\n\n",
         f"{markdown.hbold('1. Фотографии')} {emoji['camera_flash']}\n\n",

@@ -18,6 +18,12 @@ emoji = {
     'outbox_tray': u'\U0001F4E4',     #отправка письма
 }
 
+AVALIABLE_TYPES_FOR_PHOTO = [
+    'image/jpeg', 'image/pjpeg', 'image/tiff', 'image/x-tiff',
+    'image/bmp', 'image/x-windows-bmp', 'image/gif', 'image/png', 'image/heic',
+    'image/heif', 'image/heic-sequence', 'image/heif-sequence',
+]
+
 BOT_TOKEN = env.str("TELEGRAM_TOKEN")
 ADMINS = env.list("ADMINS")
 
