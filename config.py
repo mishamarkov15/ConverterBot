@@ -1,3 +1,4 @@
+from aiogram import types
 from environs import Env
 
 env = Env()
@@ -16,15 +17,27 @@ emoji = {
     'multiply': u'\U000000D7',        #знак умножения
     'memo': u'\U0001F4DD',            #тетрадь с ручкой
     'outbox_tray': u'\U0001F4E4',     #отправка письма
+    'pensive_face': u'\U0001F614',    #грустное лицо
 }
 
-AVALIABLE_TYPES_FOR_PHOTO = [
+AVAILABLE_TYPES_FOR_PHOTO = [
     'image/jpeg', 'image/pjpeg', 'image/tiff', 'image/x-tiff',
     'image/bmp', 'image/x-windows-bmp', 'image/gif', 'image/png', 'image/heic',
     'image/heif', 'image/heic-sequence', 'image/heif-sequence',
 ]
 
+test = {
+    "start": "Запустить бота",
+    "convert_image": "Начать отправку фото",
+    "settings": "Настройки",
+    "help": "Вывести справку",
+    "support": "Связь с поддержкой"
+}
+
+
+BOT_COMMANDS = [types.BotCommand(cmd, desc) for cmd, desc in test.items()]
+
 BOT_TOKEN = env.str("TELEGRAM_TOKEN")
 ADMINS = env.list("ADMINS")
 
-MAX_PHOTOS_COUNT = 20
+MAX_PHOTOS_COUNT = 30

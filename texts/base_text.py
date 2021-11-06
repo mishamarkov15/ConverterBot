@@ -1,5 +1,6 @@
 from aiogram.utils import markdown
 
+import config
 from misc.get_username import *
 from config import emoji
 
@@ -8,7 +9,7 @@ def start_text(message: types.Message) -> list:
     text = [
         f" Привет, {define_username(message)}! {emoji['waving_hand']}\n\n",
         f"{emoji['blue_diamond']} {markdown.hbold('Чтобы быстро начать конвертацию')}:\n",
-        f"1. Нажмите /convert.\n",
+        f"1. Нажмите /convert_image.\n",
         f"2. Отправьте фотографии.\n"
         f"3. Нажмите на кнопку {emoji['left']}{'Конвертировать'}{emoji['right']} "
         f"или пришлите это сообщение текстом.\n\n",

@@ -17,7 +17,7 @@ def command_convert_image_text() -> list:
 def cancel_convert_image_text() -> list:
     text = [
         "Процесс конвертирования отменён.",
-        "Чтобы начать его заново введите команду /convert.",
+        "Чтобы начать его заново введите команду /convert_image.",
     ]
     return text
 

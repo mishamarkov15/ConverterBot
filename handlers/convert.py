@@ -2,6 +2,8 @@ import json
 import logging
 import os
 import pathlib
+
+import aiogram.utils.exceptions
 import requests
 import pyheif
 
@@ -10,15 +12,15 @@ from PIL import Image
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 
-from config import BOT_TOKEN, AVALIABLE_TYPES_FOR_PHOTO, emoji
-from loader import dp
+from config import BOT_TOKEN, AVAILABLE_TYPES_FOR_PHOTO, emoji
+from loader import dp, bot
 from states.convert_image import ConvertImage
 from keyboards.convert_handler import *
 from helpers.convert_helpers import create_folder, increase_photos_count, clear_memory
 from texts.convert_image_text import *
 
 
-@dp.message_handler(commands=['convert'])
+@dp.message_handler(commands=['convert_image'])
 async def cmd_convert(message: types.Message):
     logging.info(f"User {message.chat.id} requested {message.text}")
     create_folder(pathlib.Path('data'), f"{message.chat.id}")
@@ -98,15 +100,20 @@ async def process_convert(message: types.Message, state: FSMContext):
 
             images_to_pdf_file(message)
             path_to_pdf = pathlib.Path('data', str(message.chat.id), 'result.pdf')
-            await message.answer_document(document=open(path_to_pdf, 'rb'),
-                                          caption=f"Ваш PDF файл. Спасибо,  что доверили мне эту работу "
-                                                  f"{emoji['smiling_face']}")
+            try:
+                await message.answer_document(document=open(path_to_pdf, 'rb'),
+                                                caption=f"Ваш PDF файл. Спасибо,  что доверили мне эту работу "
+                                                        f"{emoji['smiling_face']}")
+            except (aiogram.utils.exceptions.NetworkError, NameError):
+                await message.answer(text=f"Файл получился слишком большой, чтобы я смог тебе его отправить."
+                                          f" {emoji['pensive_face']}\n"
+                                          "Попробуйте отправить меньше фотографий.")
             clear_memory(message)
     await state.finish()
 
 
 async def process_download_document(message: types.Message, state: FSMContext):
-    if message.document.mime_type in AVALIABLE_TYPES_FOR_PHOTO:
+    if message.document.mime_type in AVAILABLE_TYPES_FOR_PHOTO:
         await increase_photos_count(state)
         async with state.proxy() as data:
             if data['curr_photos_count'] <= MAX_PHOTOS_COUNT:
@@ -120,8 +127,8 @@ async def process_download_document(message: types.Message, state: FSMContext):
                     response = requests.get(url=get_file_content_api_url + f"{json_data['result']['file_path']}")
                     image_type = message.document.mime_type.split(sep='/')[1]
                     photo_path = pathlib.Path('data', str(message.chat.id), 'documents',
-                                          f"img_{data['curr_photos_count']}."
-                                          f"{image_type}")
+                                              f"img_{data['curr_photos_count']}."
+                                              f"{image_type}")
                     with open(photo_path, 'wb') as file:
                         file.write(response.content)
                         logging.info("File downloaded successfully")
