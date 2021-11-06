@@ -9,5 +9,6 @@ keyboard_sending_photo_state = types.ReplyKeyboardMarkup(
         [
             types.KeyboardButton(text='Отмена')
         ]
-    ]
+    ],
+    resize_keyboard=True
 )
